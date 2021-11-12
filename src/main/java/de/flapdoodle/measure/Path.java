@@ -20,6 +20,7 @@ import org.immutables.value.Value;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 @Value.Immutable
 abstract class Path implements Comparable<Path> {
 		public abstract List<String> parts();
@@ -32,17 +33,17 @@ abstract class Path implements Comparable<Path> {
 						.build();
 		}
 
-	@Override
-	public String toString() {
-		return parts().stream().collect(Collectors.joining(":"));
-	}
+		@Override
+		public String toString() {
+				return parts().stream().collect(Collectors.joining(":"));
+		}
 
-	@Override
-	public int compareTo(final Path o) {
-		return toString().compareTo(o.toString());
-	}
+		@Override
+		public int compareTo(final Path o) {
+				return toString().compareTo(o.toString());
+		}
 
-	public static Path of(String root) {
+		public static Path of(String root) {
 				return ImmutablePath.builder().addParts(root).build();
 		}
 }

@@ -22,6 +22,11 @@ import de.flapdoodle.testdoc.TabSize;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class HowToTest {
 
 		@ClassRule
@@ -38,9 +43,9 @@ public class HowToTest {
 		public void createAFileInTempDir() {
 				recording.begin();
 				// part 1
-						recording.end();
-						// part 2
-						recording.begin();
+				recording.end();
+				// part 2
+				recording.begin();
 				// part 3
 				recording.end();
 		}
@@ -54,4 +59,52 @@ public class HowToTest {
 
 				recording.output("app.dot", dotFile.replace("\t", "  "));
 		}
+
+		@Test
+		public void sampleWithReport() {
+				final AtomicLong counter = new AtomicLong(0L);
+				final AtomicReference<String> report = new AtomicReference<>("");
+
+				Config config = Config.builder()
+						.timeStampProvider(counter::getAndIncrement)
+						.reportConsumer(report::set)
+						.build();
+
+				recording.begin();
+				try (Hook root = Measure.root("root", config)) {
+						try (Hook sub = Measure.start("block")) {
+								// code block
+						}
+						try (Hook loop = Measure.start("loop")) {
+								// different code block
+						}
+						try (Hook loop = Measure.start("loop")) {
+								// other code block
+						}
+						try (Hook loop = Measure.start("loop")) {
+								// maybe a for loop
+								try (Hook sub = Measure.start("sub")) {
+										// code inside a loop
+								}
+						}
+				}
+				recording.end();
+
+				assertEquals("-----------------------------\n"
+						+ "root:block -> 1(started: 1, stopped: 2)\n"
+						+ "root:loop -> 1(started: 3, stopped: 4)\n"
+						+ "root:loop -> 1(started: 5, stopped: 6)\n"
+						+ "root:loop:sub -> 1(started: 8, stopped: 9)\n"
+						+ "root:loop -> 3(started: 7, stopped: 10)\n"
+						+ "root -> 11(started: 0, stopped: 11)\n"
+						+ "- - - - - - - - - - - - - - - \n"
+						+ "root -> 11ms (1 loops, min: 11ms, max: 11ms)\n"
+						+ "root:block -> 1ms (1 loops, min: 1ms, max: 1ms)\n"
+						+ "root:loop -> 5ms (3 loops, min: 1ms, max: 3ms)\n"
+						+ "root:loop:sub -> 1ms (1 loops, min: 1ms, max: 1ms)\n"
+						+ "-----------------------------\n", report.get());
+
+				recording.output("report", report.get());
+		}
+
 }

@@ -18,6 +18,7 @@ package de.flapdoodle.measure;
 
 import org.immutables.value.Value;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @Value.Immutable
@@ -26,6 +27,11 @@ public interface Config {
 		@Value.Default
 		default Supplier<Long> timeStampProvider() {
 				return System::currentTimeMillis;
+		}
+
+		@Value.Default
+		default Consumer<String> reportConsumer() {
+				return System.out::println;
 		}
 
 		static ImmutableConfig.Builder builder() {

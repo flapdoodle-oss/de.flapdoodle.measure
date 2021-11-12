@@ -1,27 +1,19 @@
-# headline
+# how to measure runtime
 
-text
+to measure runtime and causes you can add measurement hooks in your code and
+will get an report if the execution of the top most block is done.
 
 ## Building Blocks
 
-```java
-${vertex}
-```
-
+Each try-block will measure its runtime.
 
 ```java
-${createAFileInTempDir}
+${sampleWithReport}
 ```
 
-... write content into this file.
-
-```java
-${writeContentIntoFileInTempDir}
-```
-
-... and generate an dot file for your application graph: 
+... and generate an report like:
 
 ```
-${writeContentIntoFileInTempDir.app.dot}
+${sampleWithReport.report}
 ```
 

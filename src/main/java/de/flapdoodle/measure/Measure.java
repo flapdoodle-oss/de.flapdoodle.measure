@@ -17,17 +17,16 @@
 package de.flapdoodle.measure;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import jdk.internal.util.xml.impl.Pair;
+
 public class Measure {
 
 		// visible for testing
-		static final ThreadLocal<Recording> recording =new ThreadLocal<>();
+		static final ThreadLocal<Recording> recording = new ThreadLocal<>();
 
 		public static Hook root(String label) {
 				return root(label, Config.defaults());
@@ -35,7 +34,7 @@ public class Measure {
 
 		public static Hook root(String label, Config config) {
 				Recording old = Measure.recording.get();
-				if (old !=null) throw new IllegalArgumentException("already recording",old.alreadyRunningException());
+				if (old != null) throw new IllegalArgumentException("already recording", old.alreadyRunningException());
 
 				Recording recording = new Recording(label, config);
 				Measure.recording.set(recording);
@@ -44,7 +43,7 @@ public class Measure {
 
 		public static Hook start(String label) {
 				Recording current = recording.get();
-				if (current!=null) {
+				if (current != null) {
 						return current.start(label);
 				}
 
@@ -53,17 +52,17 @@ public class Measure {
 				};
 		}
 
-	public static <T, E extends Exception> T block(String label, ThrowingSupplier<T, E> block) throws E {
-		try (Hook hook = start(label)) {
-			return block.get();
+		public static <T, E extends Exception> T block(String label, ThrowingSupplier<T, E> block) throws E {
+				try (Hook hook = start(label)) {
+						return block.get();
+				}
 		}
-	}
 
 		static class Recording implements Hook {
-				private final IllegalArgumentException alreadyRunning=new IllegalArgumentException("recording already started");
+				private final IllegalArgumentException alreadyRunning = new IllegalArgumentException("recording already started");
 
 				// visible for testing
-				final List<Record> records=new ArrayList<>();
+				final List<Record> records = new ArrayList<>();
 
 				private final Config config;
 
@@ -71,8 +70,8 @@ public class Measure {
 				private final long started;
 
 				public Recording(String label, Config config) {
-						this.config=config;
-						this.path=Path.of(label);
+						this.config = config;
+						this.path = Path.of(label);
 						this.started = config.timeStampProvider().get();
 				}
 
@@ -83,16 +82,18 @@ public class Measure {
 				}
 
 				@Override public void close() {
-						records.add(Record.of(path,started,config.timeStampProvider().get()));
+						records.add(Record.of(path, started, config.timeStampProvider().get()));
 						recording.set(null);
 
-					System.out.println("-----------------------------");
-					records.forEach(record -> {
-						System.out.println(record.asHumanReadable(started));
-					});
-					System.out.println("- - - - - - - - - - - - - - - ");
-					System.out.println(report());
-					System.out.println("-----------------------------");
+						StringBuilder sb=new StringBuilder();
+						sb.append("-----------------------------\n");
+						records.forEach(record -> {
+								sb.append(record.asHumanReadable(started)).append("\n");
+						});
+						sb.append("- - - - - - - - - - - - - - - \n");
+						sb.append(report()).append("\n");
+						sb.append("-----------------------------\n");
+						config.reportConsumer().accept(sb.toString());
 				}
 
 				public IllegalArgumentException alreadyRunningException() {
@@ -106,37 +107,37 @@ public class Measure {
 						private final long started;
 
 						public Sub(Path current, Path oldPath) {
-								this.started=config.timeStampProvider().get();
+								this.started = config.timeStampProvider().get();
 								this.current = current;
 								this.oldPath = oldPath;
 						}
 						@Override public void close() {
-								records.add(Record.of(current,started,config.timeStampProvider().get()));
-								Recording.this.path=oldPath;
+								records.add(Record.of(current, started, config.timeStampProvider().get()));
+								Recording.this.path = oldPath;
 						}
 				}
 
-			public String report() {
-				final Map<Path, List<Record>> byPath = records.stream()
-																.collect(Collectors.groupingBy(Record::path));
+				public String report() {
+						final Map<Path, List<Record>> byPath = records.stream()
+								.collect(Collectors.groupingBy(Record::path));
 
-				final Map<Path, String> sumByPath = byPath.entrySet().stream()
-						.collect(Collectors.toMap(entry -> entry.getKey(), entry -> Record.timeSpendIn(entry.getValue())));
+						final Map<Path, String> sumByPath = byPath.entrySet().stream()
+								.collect(Collectors.toMap(entry -> entry.getKey(), entry -> Record.timeSpendIn(entry.getValue())));
 
-				final List<Map.Entry<Path, String>> sorted = sumByPath.entrySet().stream()
-																   .sorted(Comparator.comparing(Entry::getKey))
-																   .collect(Collectors.toList());
+						final List<Map.Entry<Path, String>> sorted = sumByPath.entrySet().stream()
+								.sorted(Comparator.comparing(Entry::getKey))
+								.collect(Collectors.toList());
 
-				return sorted.stream()
-							 .map(pair -> pair.getKey()+" -> "+pair.getValue())
-							 .collect(Collectors.joining("\n"));
-			}
+						return sorted.stream()
+								.map(pair -> pair.getKey() + " -> " + pair.getValue())
+								.collect(Collectors.joining("\n"));
+				}
 
 		}
 
-	@FunctionalInterface
-	public interface ThrowingSupplier<T, E extends Exception> {
+		@FunctionalInterface
+		public interface ThrowingSupplier<T, E extends Exception> {
 
-		T get() throws E;
-	}
+				T get() throws E;
+		}
 }

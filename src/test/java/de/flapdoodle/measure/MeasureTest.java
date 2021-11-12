@@ -20,9 +20,11 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class MeasureTest {
 
 		@Test
@@ -37,14 +39,15 @@ class MeasureTest {
 		@Test
 		public void startMeasurementWithRoot() {
 				AtomicLong counter = new AtomicLong(0);
+				AtomicReference<String> report=new AtomicReference<>("");
 
 				Config config = Config.builder()
 						.timeStampProvider(counter::getAndIncrement)
+						.reportConsumer(report::set)
 						.build();
 
 				final Measure.Recording recording;
 				try (Hook hook = Measure.root("root", config)) {
-
 						recording = Measure.recording.get();
 				}
 
@@ -64,6 +67,7 @@ class MeasureTest {
 
 				Config config = Config.builder()
 						.timeStampProvider(counter::getAndIncrement)
+						.reportConsumer(report -> {})
 						.build();
 
 				final Measure.Recording recording;
@@ -91,32 +95,40 @@ class MeasureTest {
 
 		}
 
-	@Test
-	public void reportShouldBuildTree() {
-		final AtomicLong counter=new AtomicLong(0L);
-		final Measure.Recording recording;
+		@Test
+		public void reportShouldBuildTree() {
+				final AtomicLong counter = new AtomicLong(0L);
+				final AtomicReference<String> report=new AtomicReference<>("");
 
-		try (Hook root = Measure.root("root", Config.builder()
-													.timeStampProvider(counter::getAndIncrement)
-													.build())) {
-			recording = Measure.recording.get();
-			try (Hook sub = Measure.start("block")) {
+				try (Hook root = Measure.root("root", Config.builder()
+						.timeStampProvider(counter::getAndIncrement)
+								.reportConsumer(report::set)
+						.build())) {
+						try (Hook sub = Measure.start("block")) {
 
-			}
-			try (Hook loop = Measure.start("loop")) {
-			}
-			try (Hook loop = Measure.start("loop")) {
-			}
-			try (Hook loop = Measure.start("loop")) {
-				try (Hook sub = Measure.start("sub")) {
+						}
+						try (Hook loop = Measure.start("loop")) {
+						}
+						try (Hook loop = Measure.start("loop")) {
+						}
+						try (Hook loop = Measure.start("loop")) {
+								try (Hook sub = Measure.start("sub")) {
+								}
+						}
 				}
-			}
-		}
 
-		String report = recording.report();
-		assertEquals("root -> 11ms (1 loops, min: 11ms, max: 11ms)\n" +
-							 "root:block -> 1ms (1 loops, min: 1ms, max: 1ms)\n" +
-							 "root:loop -> 5ms (3 loops, min: 1ms, max: 3ms)\n" +
-							 "root:loop:sub -> 1ms (1 loops, min: 1ms, max: 1ms)", report);
-	}
+				assertEquals("-----------------------------\n"
+						+ "root:block -> 1(started: 1, stopped: 2)\n"
+						+ "root:loop -> 1(started: 3, stopped: 4)\n"
+						+ "root:loop -> 1(started: 5, stopped: 6)\n"
+						+ "root:loop:sub -> 1(started: 8, stopped: 9)\n"
+						+ "root:loop -> 3(started: 7, stopped: 10)\n"
+						+ "root -> 11(started: 0, stopped: 11)\n"
+						+ "- - - - - - - - - - - - - - - \n"
+						+ "root -> 11ms (1 loops, min: 11ms, max: 11ms)\n"
+						+ "root:block -> 1ms (1 loops, min: 1ms, max: 1ms)\n"
+						+ "root:loop -> 5ms (3 loops, min: 1ms, max: 3ms)\n"
+						+ "root:loop:sub -> 1ms (1 loops, min: 1ms, max: 1ms)\n"
+						+ "-----------------------------\n", report.get());
+		}
 }
