@@ -18,8 +18,12 @@ package de.flapdoodle.measure;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import jdk.internal.util.xml.impl.Pair;
 public class Measure {
 
 		// visible for testing
@@ -32,7 +36,7 @@ public class Measure {
 		public static Hook root(String label, Config config) {
 				Recording old = Measure.recording.get();
 				if (old !=null) throw new IllegalArgumentException("already recording",old.alreadyRunningException());
-				
+
 				Recording recording = new Recording(label, config);
 				Measure.recording.set(recording);
 				return recording;
@@ -48,6 +52,12 @@ public class Measure {
 						// do nothing
 				};
 		}
+
+	public static <T, E extends Exception> T block(String label, ThrowingSupplier<T, E> block) throws E {
+		try (Hook hook = start(label)) {
+			return block.get();
+		}
+	}
 
 		static class Recording implements Hook {
 				private final IllegalArgumentException alreadyRunning=new IllegalArgumentException("recording already started");
@@ -75,6 +85,14 @@ public class Measure {
 				@Override public void close() {
 						records.add(Record.of(path,started,config.timeStampProvider().get()));
 						recording.set(null);
+
+					System.out.println("-----------------------------");
+					records.forEach(record -> {
+						System.out.println(record.asHumanReadable(started));
+					});
+					System.out.println("- - - - - - - - - - - - - - - ");
+					System.out.println(report());
+					System.out.println("-----------------------------");
 				}
 
 				public IllegalArgumentException alreadyRunningException() {
@@ -97,5 +115,28 @@ public class Measure {
 								Recording.this.path=oldPath;
 						}
 				}
+
+			public String report() {
+				final Map<Path, List<Record>> byPath = records.stream()
+																.collect(Collectors.groupingBy(Record::path));
+
+				final Map<Path, String> sumByPath = byPath.entrySet().stream()
+						.collect(Collectors.toMap(entry -> entry.getKey(), entry -> Record.timeSpendIn(entry.getValue())));
+
+				final List<Map.Entry<Path, String>> sorted = sumByPath.entrySet().stream()
+																   .sorted(Comparator.comparing(Entry::getKey))
+																   .collect(Collectors.toList());
+
+				return sorted.stream()
+							 .map(pair -> pair.getKey()+" -> "+pair.getValue())
+							 .collect(Collectors.joining("\n"));
+			}
+
 		}
+
+	@FunctionalInterface
+	public interface ThrowingSupplier<T, E extends Exception> {
+
+		T get() throws E;
+	}
 }

@@ -37,3 +37,4 @@ velocity.log
 .idea
 
 .factorypath
+*.iml

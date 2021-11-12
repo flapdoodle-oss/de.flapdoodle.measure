@@ -17,9 +17,10 @@
 package de.flapdoodle.measure;
 
 import org.immutables.value.Value;
-
+import org.immutables.value.Value.Auxiliary;
+import java.util.Comparator;
 import java.util.List;
-
+import java.util.stream.Collectors;
 @Value.Immutable
 abstract class Record {
 		public abstract Path path();
@@ -33,4 +34,34 @@ abstract class Record {
 						.stop(stop)
 						.build();
 		}
+
+		@Auxiliary
+	public String asHumanReadable(long recordingStartedAt) {
+		return path()
+				+ " -> "
+				+ diff(start(), stop())
+				+ "(started: "
+				+ diff(recordingStartedAt, start())
+				+ ", stopped: "
+				+ diff(recordingStartedAt, stop())
+				+ ")";
+	}
+
+	private static String diff(long start, long stop) {
+		return "" + (stop - start);
+	}
+
+	public static String timeSpendIn(final List<Record> records) {
+		final List<Long> timeSpend = records.stream()
+											.map(r -> r.stop() - r.start())
+											.collect(Collectors.toList());
+
+		final Long sum = timeSpend
+				.stream()
+				.reduce(0L, Long::sum);
+		final String min = timeSpend.stream().min(Comparator.naturalOrder()).map(it -> "" + it + "ms").orElse("-");
+		final String max = timeSpend.stream().max(Comparator.naturalOrder()).map(it -> "" + it + "ms").orElse("-");
+
+		return ""+sum+"ms ("+records.size()+" loops, min: "+min+", max: "+max+")";
+	}
 }

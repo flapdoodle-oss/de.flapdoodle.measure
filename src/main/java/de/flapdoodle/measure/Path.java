@@ -19,9 +19,9 @@ package de.flapdoodle.measure;
 import org.immutables.value.Value;
 
 import java.util.List;
-
+import java.util.stream.Collectors;
 @Value.Immutable
-abstract class Path {
+abstract class Path implements Comparable<Path> {
 		public abstract List<String> parts();
 
 		@Value.Auxiliary
@@ -32,7 +32,17 @@ abstract class Path {
 						.build();
 		}
 
-		public static Path of(String root) {
+	@Override
+	public String toString() {
+		return parts().stream().collect(Collectors.joining(":"));
+	}
+
+	@Override
+	public int compareTo(final Path o) {
+		return toString().compareTo(o.toString());
+	}
+
+	public static Path of(String root) {
 				return ImmutablePath.builder().addParts(root).build();
 		}
 }

@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
 class MeasureTest {
 
 		@Test
@@ -90,4 +90,33 @@ class MeasureTest {
 						);
 
 		}
+
+	@Test
+	public void reportShouldBuildTree() {
+		final AtomicLong counter=new AtomicLong(0L);
+		final Measure.Recording recording;
+
+		try (Hook root = Measure.root("root", Config.builder()
+													.timeStampProvider(counter::getAndIncrement)
+													.build())) {
+			recording = Measure.recording.get();
+			try (Hook sub = Measure.start("block")) {
+
+			}
+			try (Hook loop = Measure.start("loop")) {
+			}
+			try (Hook loop = Measure.start("loop")) {
+			}
+			try (Hook loop = Measure.start("loop")) {
+				try (Hook sub = Measure.start("sub")) {
+				}
+			}
+		}
+
+		String report = recording.report();
+		assertEquals("root -> 11ms (1 loops, min: 11ms, max: 11ms)\n" +
+							 "root:block -> 1ms (1 loops, min: 1ms, max: 1ms)\n" +
+							 "root:loop -> 5ms (3 loops, min: 1ms, max: 3ms)\n" +
+							 "root:loop:sub -> 1ms (1 loops, min: 1ms, max: 1ms)", report);
+	}
 }
