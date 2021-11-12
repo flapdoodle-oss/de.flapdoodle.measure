@@ -5,7 +5,7 @@
     <groupId>de.flapdoodle.measure</groupId>
     <artifactId>de.flapdoodle.measure</artifactId>
     <name>Flapdoodle Measure Runtime</name>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
 
     <description>measure - a simple way to build an init-like system</description>
     <url>http://github.com/flapdoodle-oss/de.flapdoodle.measure</url>
@@ -31,7 +31,7 @@
         <connection>scm:git:git@github.com:flapdoodle-oss/de.flapdoodle.measure.git</connection>
         <developerConnection>scm:git:git@github.com:flapdoodle-oss/de.flapdoodle.measure.git</developerConnection>
         <url>git@github.com:flapdoodle-oss/de.flapdoodle.measure.git</url>
-      <tag>de.flapdoodle.measure-1.0.0</tag>
+      <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
