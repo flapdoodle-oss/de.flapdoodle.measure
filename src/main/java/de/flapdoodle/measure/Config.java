@@ -38,7 +38,7 @@ public interface Config {
 				return ImmutableConfig.builder();
 		}
 
-		static Config defaults() {
+		static ImmutableConfig defaults() {
 				return builder().build();
 		}
 }

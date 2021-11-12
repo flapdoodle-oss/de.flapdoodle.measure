@@ -30,7 +30,7 @@ class MeasureTest {
 		@Test
 		public void callingRootTwiceMustFail() {
 				Assertions.assertThatThrownBy(() -> {
-						try (Hook hook = Measure.root("root")) {
+						try (Hook hook = Measure.root("root", Config.defaults().withReportConsumer(report -> {}))) {
 								Measure.root("subMustFail");
 						}
 				}).isInstanceOf(IllegalArgumentException.class);
