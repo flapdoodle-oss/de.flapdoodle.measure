@@ -10,7 +10,7 @@ runtime measurement tools
 
 ### Maven
 
-Stable (Maven Central Repository, Released: 11.11.2021 - wait 24hrs for [maven central](http://repo1.maven.org/maven2/de/flapdoodle/transition/de.flapdoodle.reverse/maven-metadata.xml))
+Stable (Maven Central Repository, Released: 12.11.2021 - wait 24hrs for [maven central](http://repo1.maven.org/maven2/de/flapdoodle/measure/de.flapdoodle.measure/maven-metadata.xml))
 
 	<dependency>
 		<groupId>de.flapdoodle.measure</groupId>
